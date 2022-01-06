@@ -5,6 +5,8 @@ $myCPU = Get-WmiObject -ComputerName "." -Namespace "root\cimv2" -Query "SELECT 
 $myMemory = Get-WmiObject -ComputerName "." -Namespace "root\cimv2" -Query "SELECT * FROM Win32_MemoryDevice"
 $myDisk = Get-WmiObject -ComputerName "." -Namespace "root\cimv2" -Query "SELECT * FROM Win32_LogicalDisk"
 $myMotherBoard = Get-WmiObject -ComputerName "." -Namespace "root\cimv2" -Query "SELECT * FROM Win32_BaseBoard"
+$myNetwork = Get-WmiObject -ComputerName "." -Namespace "root\cimv2" -Query "SELECT * FROM Win32_NetworkAdapterConfiguration"
+
 
 
 # ------------------------------ Info - PC --------------------------------------
@@ -36,23 +38,23 @@ $parametrosRAM = @{RAM=$ram}
 $discosAll = Get-PhysicalDisk
 $i = 1
 foreach ($disco in $discosAll){
-    $discSize = [math]::round($disco.Size / 1024 / 1024 / 1024)
-	If($discSize -gt 900){
-		$discSize = "1TB"
+    $tamDisco = [math]::round($disco.Size / 1024 / 1024 / 1024)
+	If($tamDisco -gt 900){
+		$tamDisco = "1TB"
 	}
-	ElseIf($discSize -gt 400){
-		$discSize = "500GB"
+	ElseIf($tamDisco -gt 400){
+		$tamDisco = "500GB"
 	}
-	ElseIf($discSize -gt 200){
-		$discSize = "240GB"
+	ElseIf($tamDisco -gt 200){
+		$tamDisco = "240GB"
 	}
-	ElseIf($discSize -gt 100){
-		$discSize = "120GB"
+	ElseIf($tamDisco -gt 100){
+		$tamDisco = "120GB"
 	}
 	$nombreDisco = "Disco_" + $i
 	$almacenamiento = "Almacenamiento_" + $i
 	$tipo = "Tipo_" + $i
-	$parametrosDisco = $parametrosDisco + @{$nombreDisco=$disco.FriendlyName;$almacenamiento=$discSize;$tipo=$disco.MediaType}
+	$parametrosDisco = $parametrosDisco + @{$nombreDisco=$disco.FriendlyName;$almacenamiento=$tamDisco;$tipo=$disco.MediaType}
 	$i = $i + 1
 }
 $cantDiscos = 0
@@ -68,10 +70,19 @@ $parametrosDisco = $parametrosDisco + @{CantidadDiscos=$cantDiscos}
 # ------------------------------ Info - Mother --------------------------------------
 
 $parametrosMother = @{MotherBoard=$myMotherBoard.Product;Fabricante_MotherBoard=$myMotherBoard.Manufacturer}
+# ------------------------------ Info - Red --------------------------------------
 
+
+foreach ($red in $myNetwork){
+    If(-Not ($red.IPAddress -eq $null)){
+        If(-Not ($red.DefaultIPGateway -eq $null)){
+            $parametrosRed = @{IP=$red.IPAddress[0];MAC=$red.MACAddress;Placa=$red.Description}
+        }
+	}
+}
 
 # ------------------------------ Juntar parametros --------------------------------------
-$parametros = $parametrosPC + $parametrosSO + $parametrosCPU + $parametrosDisco + $parametrosRAM + $parametrosMother
+$parametros = $parametrosPC + $parametrosSO + $parametrosCPU + $parametrosDisco + $parametrosRAM + $parametrosMother + $parametrosRed
 
 
 
@@ -93,12 +104,16 @@ Remove-Variable -Name myMotherBoard
 Remove-Variable -Name parametrosPC
 Remove-Variable -Name parametrosSO
 Remove-Variable -Name parametrosCPU
-Remove-Variable -Name discSize
+Remove-Variable -Name disco
+Remove-Variable -Name tamDisco
 Remove-Variable -Name discosAll
 Remove-Variable -Name parametrosDisco
 Remove-Variable -Name ram
 Remove-Variable -Name parametrosRAM
 Remove-Variable -Name parametrosMother
+Remove-Variable -Name parametrosRed
+Remove-Variable -Name myNetwork
+Remove-Variable -Name red
 Remove-Variable -Name parametros
 
 write-host "Press any key to continue..."
