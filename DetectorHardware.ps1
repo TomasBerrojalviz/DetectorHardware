@@ -6,7 +6,7 @@ $myMemory = Get-WmiObject -ComputerName "." -Namespace "root\cimv2" -Query "SELE
 $myDisk = Get-WmiObject -ComputerName "." -Namespace "root\cimv2" -Query "SELECT * FROM Win32_LogicalDisk"
 $myMotherBoard = Get-WmiObject -ComputerName "." -Namespace "root\cimv2" -Query "SELECT * FROM Win32_BaseBoard"
 $myNetwork = Get-WmiObject -ComputerName "." -Namespace "root\cimv2" -Query "SELECT * FROM Win32_NetworkAdapterConfiguration"
-
+$myBios = Get-WmiObject -ComputerName "." -Namespace "root\cimv2" -Query "SELECT * FROM Win32_BIOS"
 
 
 # ------------------------------ Info - PC --------------------------------------
@@ -51,6 +51,15 @@ foreach ($disco in $discosAll){
 	ElseIf($tamDisco -gt 100){
 		$tamDisco = "120GB"
 	}
+	ElseIf($tamDisco -gt 68){
+		$tamDisco = "75GB"
+	}
+	ElseIf($tamDisco -gt 55){
+		$tamDisco = "64GB"
+	}
+	ElseIf($tamDisco -gt 25){
+		$tamDisco = "32GB"
+	}
 	$nombreDisco = "Disco_" + $i
 	$almacenamiento = "Almacenamiento_" + $i
 	$tipo = "Tipo_" + $i
@@ -67,11 +76,13 @@ ElseIf($discosAll.Count -gt 1){
 
 $parametrosDisco = $parametrosDisco + @{CantidadDiscos=$cantDiscos}
 	
+
 # ------------------------------ Info - Mother --------------------------------------
 
 $parametrosMother = @{MotherBoard=$myMotherBoard.Product;Fabricante_MotherBoard=$myMotherBoard.Manufacturer}
-# ------------------------------ Info - Red --------------------------------------
 
+
+# ------------------------------ Info - Red --------------------------------------
 
 foreach ($red in $myNetwork){
     If(-Not ($red.IPAddress -eq $null)){
@@ -81,8 +92,13 @@ foreach ($red in $myNetwork){
 	}
 }
 
+
+# ------------------------------ Info - Red --------------------------------------
+
+$parametrosBios = @{BIOS=$myBios.Version;Fabricante_BIOS=$myBios.Manufacturer}
+
 # ------------------------------ Juntar parametros --------------------------------------
-$parametros = $parametrosPC + $parametrosSO + $parametrosCPU + $parametrosDisco + $parametrosRAM + $parametrosMother + $parametrosRed
+$parametros = $parametrosPC + $parametrosSO + $parametrosCPU + $parametrosDisco + $parametrosRAM + $parametrosMother + $parametrosRed + $parametrosBios
 
 
 
@@ -93,6 +109,11 @@ echo "------------------------- INFO - PC ------------------------------"
 echo "------------------------------------------------------------------"
 echo " "
 $parametros
+
+
+#$postParams = @{$pcNombre + ";" + $pcDominio + ";" + pcArquitectura}
+#$web=Invoke-WebRequest -Uri 'https://localhost/examplepost.php' -Method Post -Body $postParams
+#$web.content
 
 # ------------------------------ Borrar variables --------------------------------------
 Remove-Variable -Name myComputer
@@ -114,15 +135,13 @@ Remove-Variable -Name parametrosMother
 Remove-Variable -Name parametrosRed
 Remove-Variable -Name myNetwork
 Remove-Variable -Name red
+Remove-Variable -Name parametrosBios
+Remove-Variable -Name myBios
 Remove-Variable -Name parametros
 
 write-host "Press any key to continue..."
 [void][System.Console]::ReadKey($true)
 
-
-#$postParams = @{$pcNombre + ";" + $pcDominio + ";" + pcArquitectura}
-#$web=Invoke-WebRequest -Uri 'https://localhost/examplepost.php' -Method Post -Body $postParams
-#$web.content
 
 
 
