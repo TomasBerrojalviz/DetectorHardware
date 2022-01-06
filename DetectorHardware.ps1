@@ -55,8 +55,15 @@ foreach ($disco in $discosAll){
 	$parametrosDisco = $parametrosDisco + @{$nombreDisco=$disco.FriendlyName;$almacenamiento=$discSize;$tipo=$disco.MediaType}
 	$i = $i + 1
 }
+$cantDiscos = 0
+If($discosAll.Count -eq $null){
+	$cantDiscos = 1
+}
+ElseIf($discosAll.Count -gt 1){
+    $cantDiscos = $discosAll.Count
+}
 
-$parametrosDisco = $parametrosDisco + @{Cantidad=$discosAll.Count}
+$parametrosDisco = $parametrosDisco + @{CantidadDiscos=$cantDiscos}
 	
 # ------------------------------ Info - Mother --------------------------------------
 
