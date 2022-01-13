@@ -2,12 +2,58 @@
 $myComputer = Get-WmiObject -ComputerName "." -Namespace "root\cimv2" -Query "SELECT * FROM Win32_ComputerSystem"
 $myOS = Get-WmiObject -ComputerName "." -Namespace "root\cimv2" -Query "SELECT * FROM Win32_OperatingSystem"
 $myCPU = Get-WmiObject -ComputerName "." -Namespace "root\cimv2" -Query "SELECT * FROM Win32_Processor"
-$myMemory = Get-WmiObject -ComputerName "." -Namespace "root\cimv2" -Query "SELECT * FROM Win32_MemoryDevice"
-$myDisk = Get-WmiObject -ComputerName "." -Namespace "root\cimv2" -Query "SELECT * FROM Win32_LogicalDisk"
+$myMemory = Get-WmiObject -ComputerName "." -Namespace "root\cimv2" -Query "SELECT * FROM Win32_PhysicalMemory"
 $myMotherBoard = Get-WmiObject -ComputerName "." -Namespace "root\cimv2" -Query "SELECT * FROM Win32_BaseBoard"
 $myNetwork = Get-WmiObject -ComputerName "." -Namespace "root\cimv2" -Query "SELECT * FROM Win32_NetworkAdapterConfiguration"
 $myBios = Get-WmiObject -ComputerName "." -Namespace "root\cimv2" -Query "SELECT * FROM Win32_BIOS"
 $myVideo = Get-WmiObject -ComputerName "." -Namespace "root\cimv2" -Query "SELECT * FROM Win32_VideoController"
+ 
+ #               TYPES RAM
+#Unknown (0)
+#Other (1)
+#DRAM (2)
+#Synchronous DRAM (3)
+#Cache DRAM (4)
+#EDO (5)
+#EDRAM (6)
+#VRAM (7)
+#SRAM (8)
+#RAM (9)
+#ROM (10)
+#Flash (11)
+#EEPROM (12)
+#EPROM (13)
+#PROM (14)
+#CDRAM (15)
+#3DRAM (16)
+#SDRAM (17)
+#SGRAM (18)
+#RDRAM (19)
+#DDR (20)
+#DDR2 (21)
+#DDR2—May not be available.
+#DDR2 FB-DIMM (22) DDR2—FB-DIMM,May not be available.
+#24 DDR3—May not be available.
+#25 FBD2
+#DDR4 (26)
+
+function type_ram {
+    param (
+        $type
+    )
+    switch($type){
+    0 {return "Unknown"}
+    2 {return "DRAM"}
+    7 {return "VRAM"}
+    11 {return "Flash"}
+    20 {return "DDR"}
+    21 {return "DDR2"}
+    22 {return "DDR2—FB-DIMM"}
+    24 {return "DDR3"}
+    26 {return "DDR4"}
+    }
+    #return ("Other")
+}
 
 
 # ------------------------------ Info - PC --------------------------------------
@@ -23,14 +69,23 @@ $parametrosSO = @{SO=$myOS.Caption}
 $parametrosCPU = @{CPU=$myCPU.Name}
 
 # ------------------------------ Info - RAM --------------------------------------
+$ram_tam = 0
+$i = 1
 foreach ($memory in $myMemory){
-	$ram = $memory.EndingAddress
+	$ram_tam = $ram_tam + $memory.Capacity/1GB
+	$fabricanteRAM = "RAM_" + $i
+	$tamRAM = "Tam_RAM_" + $i
+	$tipoRAM = "Tipo_RAM_" + $i
+	$parametrosRAM = $parametrosRAM + @{$fabricanteRAM=$memory.Manufacturer;$tamRAM="" + $memory.Capacity/1GB + "GB";$tipoRAM= type_ram $memory.SMBIOSMemoryType}
+    $cantRAM = $i
+	$i = $i + 1
 }
-$ram = [math]::round($ram/1MB)
 
-$ram = "" + $ram + "GB"
+$ram_tam = [math]::round($ram_tam)
 
-$parametrosRAM = @{RAM=$ram}
+$ram_tam = "" + $ram_tam + "GB"
+
+$parametrosRAM = $parametrosRAM + @{RAM_total=$ram_tam; CantidadRAM=$cantRAM}
 
 
 # ------------------------------ Info - Disco --------------------------------------
@@ -101,7 +156,7 @@ $parametrosBios = @{BIOS=$myBios.Version;Fabricante_BIOS=$myBios.Manufacturer}
 
 # ------------------------------ Info - Video --------------------------------------
 
-$parametrosVideo = @{GPU=$myVideo.Name;RAM_Dedicada="" + ($myVideo.AdapterRAM/1GB) + "GB"}
+$parametrosVideo = @{GPU=$myVideo.Name;RAM_Dedicada="" + ([math]::round($myVideo.AdapterRAM/1GB)) + "GB"}
 
 # ------------------------------ Juntar parametros --------------------------------------
 $parametros = $parametrosPC + $parametrosSO + $parametrosCPU + $parametrosDisco + $parametrosRAM + $parametrosMother + $parametrosRed + $parametrosBios + $parametrosVideo
@@ -126,7 +181,6 @@ Remove-Variable -Name myComputer
 Remove-Variable -Name myOS
 Remove-Variable -Name myCPU
 Remove-Variable -Name myMemory
-Remove-Variable -Name myDisk
 Remove-Variable -Name myMotherBoard
 Remove-Variable -Name parametrosPC
 Remove-Variable -Name parametrosSO
@@ -135,7 +189,7 @@ Remove-Variable -Name disco
 Remove-Variable -Name tamDisco
 Remove-Variable -Name discosAll
 Remove-Variable -Name parametrosDisco
-Remove-Variable -Name ram
+Remove-Variable -Name ram_tam
 Remove-Variable -Name parametrosRAM
 Remove-Variable -Name parametrosMother
 Remove-Variable -Name parametrosRed
@@ -149,8 +203,6 @@ Remove-Variable -Name parametros
 
 write-host "Press any key to continue..."
 [void][System.Console]::ReadKey($true)
-
-
 
 
 
