@@ -9,28 +9,6 @@ $myNetwork = Get-WmiObject -ComputerName "." -Namespace "root\cimv2" -Query "SEL
 $myBios = Get-WmiObject -ComputerName "." -Namespace "root\cimv2" -Query "SELECT * FROM Win32_BIOS"
 $myVideo = Get-WmiObject -ComputerName "." -Namespace "root\cimv2" -Query "SELECT * FROM Win32_VideoController"
 
-# Definimos funciones utils
-function bytes_to_GB {
-    param (
-        $bytes
-    )
-    return (bytes_to_MB $bytes) / 1024
-}
-
-function bytes_to_MB {
-    param (
-        $bytes
-    )
-    return (bytes_to_KB $bytes) / 1024
-}
-
-function bytes_to_KB {
-    param (
-        $bytes
-    )
-    return ($bytes / 1024)
-}
-
 
 # ------------------------------ Info - PC --------------------------------------
 
@@ -45,11 +23,10 @@ $parametrosSO = @{SO=$myOS.Caption}
 $parametrosCPU = @{CPU=$myCPU.Name}
 
 # ------------------------------ Info - RAM --------------------------------------
-$ram = 0
 foreach ($memory in $myMemory){
-	$ram = $ram + $memory.EndingAddress
+	$ram = $memory.EndingAddress
 }
-$ram = [math]::round((bytes_to_MB $ram))
+$ram = [math]::round($ram/1MB)
 
 $ram = "" + $ram + "GB"
 
@@ -61,7 +38,7 @@ $parametrosRAM = @{RAM=$ram}
 $discosAll = Get-PhysicalDisk
 $i = 1
 foreach ($disco in $discosAll){
-    $tamDisco = [math]::round( (bytes_to_GB $disco.Size) )
+    $tamDisco = [math]::round($disco.Size/1GB)
 	If($tamDisco -gt 900){
 		$tamDisco = "1TB"
 	}
@@ -124,7 +101,7 @@ $parametrosBios = @{BIOS=$myBios.Version;Fabricante_BIOS=$myBios.Manufacturer}
 
 # ------------------------------ Info - Video --------------------------------------
 
-$parametrosVideo = @{GPU=$myVideo.Name;RAM_Dedicada="" + (bytes_to_GB $myVideo.AdapterRAM) + "GB"}
+$parametrosVideo = @{GPU=$myVideo.Name;RAM_Dedicada="" + ($myVideo.AdapterRAM/1GB) + "GB"}
 
 # ------------------------------ Juntar parametros --------------------------------------
 $parametros = $parametrosPC + $parametrosSO + $parametrosCPU + $parametrosDisco + $parametrosRAM + $parametrosMother + $parametrosRed + $parametrosBios + $parametrosVideo
@@ -169,10 +146,6 @@ Remove-Variable -Name myBios
 Remove-Variable -Name parametrosVideo
 Remove-Variable -Name myVideo
 Remove-Variable -Name parametros
-
-Remove-Item -Path Function:bytes_to_GB
-Remove-Item -Path Function:bytes_to_MB
-Remove-Item -Path Function:bytes_to_KB
 
 write-host "Press any key to continue..."
 [void][System.Console]::ReadKey($true)
