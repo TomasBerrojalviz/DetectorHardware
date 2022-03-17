@@ -3,6 +3,11 @@ $myComputer = Get-WmiObject -ComputerName "." -Namespace "root\cimv2" -Query "SE
 $myOS = Get-WmiObject -ComputerName "." -Namespace "root\cimv2" -Query "SELECT * FROM Win32_OperatingSystem"
 $myCPU = Get-WmiObject -ComputerName "." -Namespace "root\cimv2" -Query "SELECT * FROM Win32_Processor"
 $myMemory = Get-WmiObject -ComputerName "." -Namespace "root\cimv2" -Query "SELECT * FROM Win32_PhysicalMemory"
+<<<<<<< HEAD
+$myNetwork = Get-WmiObject -ComputerName "." -Namespace "root\cimv2" -Query "SELECT * FROM Win32_NetworkAdapterConfiguration"
+$data_user = Get-WmiObject -ComputerName "." -Namespace "root\cimv2" -Query "SELECT * FROM win32_computersystem"
+ 
+=======
 $myMotherBoard = Get-WmiObject -ComputerName "." -Namespace "root\cimv2" -Query "SELECT * FROM Win32_BaseBoard"
 $myNetwork = Get-WmiObject -ComputerName "." -Namespace "root\cimv2" -Query "SELECT * FROM Win32_NetworkAdapterConfiguration"
 $myBios = Get-WmiObject -ComputerName "." -Namespace "root\cimv2" -Query "SELECT * FROM Win32_BIOS"
@@ -37,10 +42,19 @@ $myVideo = Get-WmiObject -ComputerName "." -Namespace "root\cimv2" -Query "SELEC
 #25 FBD2
 #DDR4 (26)
 
+>>>>>>> 6a77b7ce26cd0eb4ee74ea9e66eb7587536d3d00
 function type_ram {
     param (
         $type
     )
+<<<<<<< HEAD
+    $RETURN = "Unknown"
+    switch($type){
+        24 {$RETURN = "DDR3"}
+        26 {$RETURN = "DDR4"}
+    }
+    return ($RETURN)
+=======
     switch($type){
     0 {return "Unknown"}
     2 {return "DRAM"}
@@ -53,22 +67,35 @@ function type_ram {
     26 {return "DDR4"}
     }
     #return ("Other")
+>>>>>>> 6a77b7ce26cd0eb4ee74ea9e66eb7587536d3d00
 }
 
+# ------------------------------ Info - CUENTA --------------------------------------
+
+$user_with_domain = $data_user.UserName -split "\\"
+$PC_Usuario = $user_with_domain[1]
 
 # ------------------------------ Info - PC --------------------------------------
 
-$parametrosPC = @{PC=$myComputer.name;Dominio=$myComputer.Domain;Arquitectura=$myComputer.SystemType}
+$PC_Nombre = $myComputer.name;
 
 # ------------------------------ Info - SO --------------------------------------
 
-$parametrosSO = @{SO=$myOS.Caption}
+$PC_Windows = $myOS.Caption
 
 # ------------------------------ Info - CPU --------------------------------------
 
-$parametrosCPU = @{CPU=$myCPU.Name}
+$PC_CPU = $myCPU.Name
 
 # ------------------------------ Info - RAM --------------------------------------
+<<<<<<< HEAD
+
+$PC_RAM_Cant = 0
+foreach ($memory in $myMemory){
+	$PC_RAM_Cant = $PC_RAM_Cant + $memory.Capacity/1GB
+	$PC_RAM_Tipo = type_ram $memory.SMBIOSMemoryType
+}
+=======
 $ram_tam = 0
 $i = 1
 foreach ($memory in $myMemory){
@@ -86,10 +113,19 @@ $ram_tam = [math]::round($ram_tam)
 $ram_tam = "" + $ram_tam + "GB"
 
 $parametrosRAM = $parametrosRAM + @{RAM_total=$ram_tam; CantidadRAM=$cantRAM}
+>>>>>>> 6a77b7ce26cd0eb4ee74ea9e66eb7587536d3d00
 
+$PC_RAM_Cant = [math]::round($PC_RAM_Cant)
 
 # ------------------------------ Info - Disco --------------------------------------
 
+<<<<<<< HEAD
+$PC_DISCO_Tipo = "HDD"
+foreach ($disco in Get-PhysicalDisk){
+    if($disco.MediaType -eq "SSD"){
+        $PC_DISCO_Tipo = "SSD"
+    }
+=======
 $discosAll = Get-PhysicalDisk
 $i = 1
 foreach ($disco in $discosAll){
@@ -127,27 +163,28 @@ If($discosAll.Count -eq $null){
 }
 ElseIf($discosAll.Count -gt 1){
     $cantDiscos = $discosAll.Count
+>>>>>>> 6a77b7ce26cd0eb4ee74ea9e66eb7587536d3d00
 }
 
-$parametrosDisco = $parametrosDisco + @{CantidadDiscos=$cantDiscos}
 	
-
-# ------------------------------ Info - Mother --------------------------------------
-
-$parametrosMother = @{MotherBoard=$myMotherBoard.Product;Fabricante_MotherBoard=$myMotherBoard.Manufacturer}
-
 
 # ------------------------------ Info - Red --------------------------------------
 
 foreach ($red in $myNetwork){
     If(-Not ($red.IPAddress -eq $null)){
         If(-Not ($red.DefaultIPGateway -eq $null)){
-            $parametrosRed = @{IP=$red.IPAddress[0];MAC=$red.MACAddress;Placa=$red.Description}
+            $PC_MAC = $red.IPAddress[0]
+            $PC_IP = $red.MACAddress
+         
         }
 	}
 }
 
 
+<<<<<<< HEAD
+# ------------------------------ Juntar parametros --------------------------------------
+#$parametros = $parametrosPC + $parametrosSO + $parametrosCPU + $parametrosDisco + $parametrosRAM + $parametrosRed
+=======
 # ------------------------------ Info - Red --------------------------------------
 
 $parametrosBios = @{BIOS=$myBios.Version;Fabricante_BIOS=$myBios.Manufacturer}
@@ -160,27 +197,44 @@ $parametrosVideo = @{GPU=$myVideo.Name;RAM_Dedicada="" + ([math]::round($myVideo
 
 # ------------------------------ Juntar parametros --------------------------------------
 $parametros = $parametrosPC + $parametrosSO + $parametrosCPU + $parametrosDisco + $parametrosRAM + $parametrosMother + $parametrosRed + $parametrosBios + $parametrosVideo
+>>>>>>> 6a77b7ce26cd0eb4ee74ea9e66eb7587536d3d00
 
 
-
-# ------------------------------ Imprimir parametros --------------------------------------
-echo " "
-echo "------------------------------------------------------------------"
-echo "------------------------- INFO - PC ------------------------------"
-echo "------------------------------------------------------------------"
-echo " "
-$parametros
-
-
-#$postParams = @{$pcNombre + ";" + $pcDominio + ";" + pcArquitectura}
+$postParams = @{PC=$PC_Nombre; USUARIO=$PC_Usuario; IP=$PC_IP; MAC=$PC_MAC; WINDOWS=$PC_Windows;
+                RAM_GB=$PC_RAM_Cant; RAM_TIPO=$PC_RAM_Tipo; PROCESADOR=$PC_CPU; DISCO=$PC_DISCO_Tipo}
 #$web=Invoke-WebRequest -Uri 'https://localhost/examplepost.php' -Method Post -Body $postParams
 #$web.content
+
+#PC		$PC_Nombre
+#USUARIO		$PC_Usuario
+#IP		$PC_IP
+#MAC		$PC_MAC
+#WINDOWS		$PC_Windows
+#RAM_GB		$PC_RAM_Cant
+#RAM_TIPO	$PC_RAM_Tipo
+#PROCESADOR	$PC_CPU
+#DISCO		$PC_DISCO_Tipo
+
+$postParams
 
 # ------------------------------ Borrar variables --------------------------------------
 Remove-Variable -Name myComputer
 Remove-Variable -Name myOS
 Remove-Variable -Name myCPU
 Remove-Variable -Name myMemory
+<<<<<<< HEAD
+Remove-Variable -Name data_user
+Remove-Variable -Name user_with_domain
+Remove-Variable -Name PC_Usuario
+Remove-Variable -Name PC_Nombre
+Remove-Variable -Name PC_Windows
+Remove-Variable -Name PC_CPU
+Remove-Variable -Name PC_RAM_Cant
+Remove-Variable -Name PC_RAM_Tipo
+Remove-Variable -Name PC_DISCO_Tipo
+Remove-Variable -Name PC_MAC
+Remove-Variable -Name PC_IP
+=======
 Remove-Variable -Name myMotherBoard
 Remove-Variable -Name parametrosPC
 Remove-Variable -Name parametrosSO
@@ -200,6 +254,7 @@ Remove-Variable -Name myBios
 Remove-Variable -Name parametrosVideo
 Remove-Variable -Name myVideo
 Remove-Variable -Name parametros
+>>>>>>> 6a77b7ce26cd0eb4ee74ea9e66eb7587536d3d00
 
 write-host "Press any key to continue..."
 [void][System.Console]::ReadKey($true)
